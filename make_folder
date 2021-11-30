@@ -1,0 +1,46 @@
+#!/bin/bash
+
+daynum=$(printf %02d $1)
+mkdir Day_$daynum
+
+if [ -f input.txt ]; then
+	mv input.txt Day_$daynum/input.txt
+fi
+
+cp AOCLibraries/AoCUtils.py Day_$daynum/
+
+echo 'from AoCUtils import *
+
+
+result = 0
+partNumber = "1"
+
+writeToLog = False
+if writeToLog:
+    logFile = open("log" + partNumber + ".txt", "w")
+else:
+    logFile = "stdout"
+printLog = printLogFactory(logFile)
+
+
+with open("input.txt", "r") as inputFile:
+    lines = inputFile.read().strip().split("\n")
+    for line in lines:
+        line = line.strip()
+
+
+
+
+
+with open("output" + partNumber + ".txt", "w") as outputFile:
+    outputFile.write(str(result))
+    print(str(result))
+
+if writeToLog:
+    cast(TextIOWrapper, logFile).close()
+' > ./Day_$daynum/part1.py
+
+touch ./Day_$daynum/part2.py
+touch ./Day_$daynum/input.txt
+touch ./Day_$daynum/output1.txt
+touch ./Day_$daynum/output2.txt
