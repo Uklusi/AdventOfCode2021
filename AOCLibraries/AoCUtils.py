@@ -38,6 +38,9 @@ def join(l: Iterable[Any]) -> str:
 def prettify(l: Iterable[Any]) -> str:
     return "\n".join( stringify(l) )
 
+def prettifyDict(l: dict) -> str:
+    return "\n".join( f"{str(k)}: {str(v)}" for (k, v) in l.items())
+
 def sign(x: Numeric) -> int:
     return 1 if x > 0 else 0 if x == 0 else -1
 
