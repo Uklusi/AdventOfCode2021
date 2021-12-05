@@ -8,6 +8,7 @@ from math import gcd
 from functools import partial
 from itertools import product
 from queue import PriorityQueue
+from collections import defaultdict
 import re
 
 import numpy as np

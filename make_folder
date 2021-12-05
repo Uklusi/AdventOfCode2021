@@ -7,7 +7,7 @@ if [ -f input.txt ]; then
 	mv input.txt Day_$daynum/input.txt
 fi
 
-cp AOCLibraries/AoCUtils.py Day_$daynum/
+ln -s ../AOCLibraries/AoCUtils.py Day_$daynum/
 
 echo 'from AoCUtils import *
 

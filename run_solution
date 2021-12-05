@@ -6,7 +6,7 @@ cd $folder
 python3 ./part$2.py
 
 if [ $2 -eq "1" -a "$3" != "--no-copy" ]; then
-    if [ ! -s part2.py ]; then
+    if [ ! -s part2.py -o ! -s output2.txt -o "$3" == "--copy" ]; then
         cat part1.py | sed 's/partNumber = "1"/partNumber = "2"/g' > part2.py
     fi
 fi
