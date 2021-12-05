@@ -1,14 +1,28 @@
 from __future__ import annotations
 import hashlib
-from typing import Sequence, Iterable, Optional, Callable, Union, Literal, TypeVar, NamedTuple, NoReturn, Any, NewType, cast, overload
-from collections.abc import Iterable
+from typing import (
+    Hashable,
+    Sequence,
+    Iterable,
+    Optional,
+    Callable,
+    Union,
+    Literal,
+    TypeVar,
+    NamedTuple,
+    NoReturn,
+    Any,
+    NewType,
+    cast,
+    overload
+)
 from io import TextIOWrapper
 from copy import copy, deepcopy
 from math import gcd
 from functools import partial
 from itertools import product
 from queue import PriorityQueue
-from collections import defaultdict
+from collections import defaultdict # noqa
 import re
 
 import numpy as np
@@ -21,34 +35,36 @@ LogFileType = Union[str, TextIOWrapper]
 DoubleSlice = Union[tuple[MaybeSlice, MaybeSlice], MaybeSlice]
 
 T = TypeVar('T')
+NUM = TypeVar('NUM', int, float)
 NewType = NewType
 
 # Utility functions (debug, logging, prettify, etc...)
 
-def rotations(l: Sequence[T]) -> list[Sequence[T]]:
-    cycled = list(l) + list(l)
-    n = len(l)
-    return [cycled[i:i+n] for i in range(n)]
+def rotations(seq: Sequence[T]) -> list[Sequence[T]]:
+    cycled = list(seq) + list(seq)
+    n = len(seq)
+    return [cycled[i:i + n] for i in range(n)]
 
-def stringify(l: Iterable[Any]) -> list[str]:
-    return [str(o) for o in l]
+def stringify(seq: Iterable[Any]) -> list[str]:
+    return [str(o) for o in seq]
 
-def join(l: Iterable[Any]) -> str:
-    return "".join(stringify(l))
+def join(seq: Iterable[Any]) -> str:
+    return "".join(stringify(seq))
 
-def prettify(l: Iterable[Any]) -> str:
-    return "\n".join( stringify(l) )
+def prettify(seq: Iterable[Any]) -> str:
+    return "\n".join(stringify(seq))
 
-def prettifyDict(l: dict) -> str:
-    return "\n".join( f"{str(k)}: {str(v)}" for (k, v) in l.items())
+def prettifyDict(dictionary: dict) -> str:
+    return "\n".join(f"{str(k)}: {str(v)}" for (k, v) in dictionary.items())
 
 def sign(x: Numeric) -> int:
     return 1 if x > 0 else 0 if x == 0 else -1
 
-def docstring(s: str) -> str:
-    slist = s.strip().split("\n")
-    slist = [l.strip() for l in slist]
-    return prettify(s)
+def docstring(string: str) -> str:
+    slist = string.strip().split("\n")
+    slist = [line.strip() for line in slist]
+    return prettify(slist)
+
 
 def printLogFactory(logFile: LogFileType, printNewline: bool = True) -> Callable[..., None]:
 
@@ -62,7 +78,7 @@ def printLogFactory(logFile: LogFileType, printNewline: bool = True) -> Callable
         if isinstance(logFile, str):
             print(*t)
         else:
-            s = " ".join( stringify(t) )
+            s = " ".join(stringify(t))
             logFile.write(s)
             if printNewline:
                 logFile.write("\n")
@@ -75,6 +91,7 @@ false = False
 true = True
 # maze characters
 solid = "\u2588"
+full = solid
 empty = " "
 path = "·"
 
@@ -97,7 +114,7 @@ def dirToNum(direction: DirectionType) -> int:
 
     if isinstance(direction, int):
         return direction % 4
-    
+
     direction = direction.upper()
     if direction in ["N", "U", "^", "0"]:
         return 0
@@ -140,9 +157,13 @@ def dirToArrow(direction: DirectionType) -> str:
     else: # direction == 3:
         return "<"
 
-_PositionGeneric = Union["Position", "Agent", "MapPosition", "MapAgent"]
+_PositionVar = TypeVar("_PositionVar", bound="Position")
 
-_BaseR2Generic = Union["_BaseR2Class", "HexGrid", "Vector", _PositionGeneric]
+_PositionGeneric = TypeVar("_PositionGeneric", bound="Position")
+_PositionGeneric2 = TypeVar("_PositionGeneric2", bound="Position")
+
+_BaseR2Generic = TypeVar('_BaseR2Generic', bound='_BaseR2Class')
+_BaseR2Generic2 = TypeVar('_BaseR2Generic2', bound='_BaseR2Class')
 
 class _BaseR2Class():
     """
@@ -158,7 +179,7 @@ class _BaseR2Class():
         self.upVertSign = 1
         self.x = 0
         self.y = 0
-    
+
     def stdcoords(self, inverted: bool = False) -> tuple[int, int]:
         if inverted:
             return (self.y, self.x)
@@ -166,11 +187,11 @@ class _BaseR2Class():
 
     def __hash__(self) -> int:
         return hash(self.stdcoords())
-    
-    def __eq__(self: _BaseR2Generic, other: _BaseR2Generic) -> bool:
+
+    def __eq__(self: _BaseR2Generic, other: _BaseR2Generic2) -> bool:
         return self.stdcoords() == other.stdcoords()
 
-    def __gt__(self: _BaseR2Generic, other: _BaseR2Generic) -> bool:
+    def __gt__(self: _BaseR2Generic, other: _BaseR2Generic2) -> bool:
         (sx, sy, *_) = self.stdcoords()
         (ox, oy, *_) = other.stdcoords()
         sign = -self.upVertSign
@@ -178,10 +199,10 @@ class _BaseR2Class():
         o = (sign * oy, ox)
         return s > o
 
-    def __ge__(self: _BaseR2Generic, other: _BaseR2Generic) -> Union[bool, NoReturn]:
+    def __ge__(self: _BaseR2Generic, other: _BaseR2Generic2) -> Union[bool, NoReturn]:
         try:
             gt = self > other
-        except:
+        except: # noqa
             raise(NotImplementedError)
         return gt or self == other
 
@@ -191,17 +212,17 @@ class _BaseR2Class():
 
     def __str__(self) -> str:
         return str(self.coords())
-        
+
     def __repr__(self) -> str:
         return str(self)
-    
+
     def debug(self):
         (x, y) = self.stdcoords()
         return f"{type(self)}(x: {x}, y: {y}) - reverseY: {self.reverseY}"
 
     def copy(self: _BaseR2Generic) -> _BaseR2Generic:
         return copy(self)
-    
+
 
 class Vector(_BaseR2Class):
     """
@@ -239,21 +260,21 @@ class Vector(_BaseR2Class):
 
         self.vx = x
         self.vy = y
-                
+
     def __add__(self, other: Vector) -> Vector:
         return Vector(
             self.vx + other.vx,
             self.vy + other.vy,
-            reverseY = self.reverseY
+            reverseY=self.reverseY
         )
-      
+
     def __sub__(self, other: Vector) -> Vector:
         return Vector(
             self.vx - other.vx,
             self.vy - other.vy,
-            reverseY = self.reverseY
+            reverseY=self.reverseY
         )
-    
+
     def __neg__(self) -> Vector:
         return Vector(
             -self.vx,
@@ -262,11 +283,11 @@ class Vector(_BaseR2Class):
         )
 
     def __rmul__(self, n: int) -> Vector:
-        return Vector(n*self.vx, n*self.vy, reverseY=self.reverseY)
-    
+        return Vector(n * self.vx, n * self.vy, reverseY=self.reverseY)
+
     def __mul__(self, n: int) -> Vector:
         return n * self
-    
+
     def __str__(self) -> str:
         (x, y) = self.coords()
         return f"<{x}, {y}>"
@@ -280,10 +301,10 @@ class Vector(_BaseR2Class):
         return abs(self.vx) + abs(self.vy)
 
     def length(self) -> float:
-        return ( (self.vx) ** 2 + (self.vy) ** 2 ) ** (1/2)
+        return ((self.vx) ** 2 + (self.vy) ** 2) ** (1 / 2)
 
-    def direction(self, normalized: bool = False) -> Union[Vector,NormalizedVector]:
-        if self == Vector(0,0):
+    def direction(self, normalized: bool = False) -> Union[Vector, NormalizedVector]:
+        if self == Vector(0, 0):
             return self
         elif normalized:
             d = self.length()
@@ -321,8 +342,6 @@ def VectorDir(direction: DirectionType, n: int = 1, reverseY: bool = True) -> Ve
     else:
         x = -n
     return Vector(x, y, reverseY=reverseY)
-
-_PositionVar = TypeVar("_PositionVar", bound="Position")
 
 class Position(_BaseR2Class):
     """
@@ -362,15 +381,17 @@ class Position(_BaseR2Class):
         return type(self)(
             self.x + vector.vx,
             self.y + vector.vy,
-            reverseY = self.reverseY
+            reverseY=self.reverseY
         )
-    
+
     @overload
     def __sub__(self: _PositionVar, other: Vector) -> _PositionVar:
-        return type(self)(0,0)
+        return type(self)(0, 0)
+
     @overload
     def __sub__(self, other: _PositionGeneric) -> Vector:
-        return Vector(0,0)
+        return Vector(0, 0)
+
     def __sub__(self, other: Union[Vector, _PositionGeneric]):
         if isinstance(other, Vector):
             return self + (-other)
@@ -378,7 +399,7 @@ class Position(_BaseR2Class):
         return Vector(
             self.x - other.x,
             self.y - other.y,
-            reverseY = self.reverseY
+            reverseY=self.reverseY
         )
 
     def __str__(self) -> str:
@@ -389,21 +410,29 @@ class Position(_BaseR2Class):
             return (self.y, self.x)
         return (self.x, self.y)
 
-    def adjacent(self: _PositionVar, includeCorners: bool = False, include: Sequence[_PositionGeneric] = []) -> list[_PositionVar]:
+    def adjacent(
+        self: _PositionVar,
+        includeCorners: bool = False,
+        include: Sequence[_PositionVar] = []
+    ) -> list[_PositionVar]:
         if includeCorners:
-            return [self + Vector(i, j) for (i,j) in product([-1,0,1], repeat=2) if (i,j) != (0,0)]
+            initialRet = [self + Vector(i, j) for (i, j) in product([-1, 0, 1], repeat=2) if (i, j) != (0, 0)]
+        else:
+            initialRet = [self + VectorDir(direction=d) for d in [0, 1, 2, 3]]
 
-        return [self + VectorDir(direction=d) for d in [0,1,2,3] ]
-    
+        return (initialRet + [pos for pos in include if pos not in initialRet])
+
     def distance(self, other: Optional[_PositionGeneric] = None) -> int:
         if other is None:
-            other = Position(0,0)
-        return (self - other).distance()
+            other = Position(0, 0)
+        v: Vector = self - other
+        return v.distance()
 
     def length(self, other: Optional[_PositionGeneric] = None) -> float:
         if other is None:
-            other = Position(0,0)
-        return (self - other).length()
+            other = Position(0, 0)
+        v: Vector = self - other
+        return v.length()
 
 
 class Agent(Position):
@@ -429,13 +458,12 @@ class Agent(Position):
         super().__init__(x, y, reverseY=reverseY)
         self.direction = dirToNum(direction)
 
-    
     def __add__(self, vector: Vector) -> Agent:
         return Agent(
             self.x + vector.vx,
             self.y + vector.vy,
-            direction = self.direction,
-            reverseY = self.reverseY
+            direction=self.direction,
+            reverseY=self.reverseY
         )
 
     def __hash__(self) -> NoReturn: # type: ignore
@@ -444,29 +472,29 @@ class Agent(Position):
     def turn(self, direction: Optional[DirectionType] = 1) -> None:
         if direction is None:
             return
-        
+
         dirNum = dirToNum(direction)
 
         self.direction = (self.direction + dirNum) % 4
-    
+
     def turnRight(self) -> None:
         self.turn(1)
-    
+
     def turnLeft(self) -> None:
         self.turn(-1)
-    
+
     def turnReverse(self) -> None:
         self.turn(2)
-    
+
     def moveTo(self, target: _PositionGeneric) -> None:
         self.x = target.x
         self.y = target.y
-    
+
     def move(self, n: int = 1, direction: Optional[DirectionType] = None) -> None:
         if direction is None:
             direction = self.direction
-        
-        self.moveTo( self + VectorDir(n=n, direction=direction, reverseY=self.reverseY) )
+
+        self.moveTo(self + VectorDir(n=n, direction=direction, reverseY=self.reverseY))
 
     def position(self) -> Position:
         return Position(self.x, self.y, reverseY=self.reverseY)
@@ -485,7 +513,8 @@ class MapPosition(Position):
     MapPosition class: represents a Position on a possibly limited, possibly not fully traversable 2D plane.
     Inherits from Position
 
-    Syntax is MapPosition(x, y, reverseY=True, frame=None, xmin=-inf, xmax=inf, ymin=-inf, xmax=inf, occupied=lambda p: False) [Hashable]
+    Syntax is MapPosition(x, y, reverseY=True, frame=None, xmin=-inf, xmax=inf, ymin=-inf, xmax=inf,
+        occupied=lambda p: False) [Hashable]
 
     A MapPosition assumes reverseY, because usually a map is limited.
     The limits can be specified via frame (a view of the observable portion of the map),
@@ -512,36 +541,36 @@ class MapPosition(Position):
         super().__init__(
             x,
             y,
-            reverseY = reverseY
+            reverseY=reverseY
         )
         if frame is not None:
             self.xmin = 0
             self.xmax = len(frame[0]) - 1
             self.ymin = 0
-            self.ymax = len(frame) - 1 
+            self.ymax = len(frame) - 1
         else:
             self.xmin = xmin
             self.xmax = xmax
             self.ymin = ymin
             self.ymax = ymax
-        
+
         self._occupiedFunction = occupied
 
     def __add__(self, vector: Vector) -> _PositionGeneric:
         return MapPosition(
             self.x + vector.vx,
             self.y + vector.vy,
-            reverseY = self.reverseY,
-            xmin = self.xmin,
-            xmax = self.xmax,
-            ymin = self.ymin,
-            ymax = self.ymax,
-            occupied = self._occupiedFunction
+            reverseY=self.reverseY,
+            xmin=self.xmin,
+            xmax=self.xmax,
+            ymin=self.ymin,
+            ymax=self.ymax,
+            occupied=self._occupiedFunction
         )
-        
+
     def isOccupied(self) -> bool:
         return self._occupiedFunction(self)
-    
+
     def isEmpty(self) -> bool:
         return not self.isOccupied()
 
@@ -550,11 +579,15 @@ class MapPosition(Position):
             self.x == _inbound(self.x, self.xmin, self.xmax) and
             self.y == _inbound(self.y, self.ymin, self.ymax)
         )
-    
+
     def isValid(self) -> bool:
         return self.isInLimits() and self.isEmpty()
-    
-    def adjacent(self: _PositionVar, includeCorners: bool = False, include: Sequence[_PositionGeneric] = []) -> list[_PositionVar]:
+
+    def adjacent(
+        self: _PositionVar,
+        includeCorners: bool = False,
+        include: Sequence[_PositionVar] = []
+    ) -> list[_PositionVar]:
         ret = super().adjacent(includeCorners=includeCorners, include=include)
         T1 = type(self)
         return cast(list[T1], [p for p in ret if p.isValid() or p in include])
@@ -565,7 +598,8 @@ class MapAgent(MapPosition, Agent):
     MapAgent class: represents an agent on a MapPosition.
     Inherits from MapPosition, Agent
 
-    Syntax is MapAgent(x, y, direction=0, reverseY=True, frame=None, xmin=-inf, xmax=inf, ymin=-inf, xmax=inf, occupied=lambda p: False) [Not hashable]
+    Syntax is MapAgent(x, y, direction=0, reverseY=True, frame=None, xmin=-inf, xmax=inf, ymin=-inf, xmax=inf,
+        occupied=lambda p: False) [Not hashable]
 
     MapAgent inherits both from MapPosition and Agent, with the following changes:
     - A MapAgent has a mapPosition method returning the corresponding MapPosition
@@ -582,40 +616,40 @@ class MapAgent(MapPosition, Agent):
         xmax: Numeric = inf,
         ymin: Numeric = -inf,
         ymax: Numeric = inf,
-        occupied: Callable[[Position], bool] = lambda p: False
+        occupied: Callable[[_PositionGeneric], bool] = lambda p: False
     ):
         Agent.__init__(
             self,
             x,
             y,
-            direction = direction,
-            reverseY = reverseY
+            direction=direction,
+            reverseY=reverseY
         )
         MapPosition.__init__(
             self,
             x,
             y,
-            reverseY = reverseY,
-            frame = frame,
-            xmin = xmin,
-            xmax = xmax,
-            ymin = ymin,
-            ymax = ymax,
-            occupied = occupied
+            reverseY=reverseY,
+            frame=frame,
+            xmin=xmin,
+            xmax=xmax,
+            ymin=ymin,
+            ymax=ymax,
+            occupied=occupied
         )
         self.direction = dirToNum(direction)
-    
+
     def __add__(self, vector: Vector) -> MapAgent:
         return MapAgent(
             self.x + vector.vx,
             self.y + vector.vy,
-            reverseY = self.reverseY,
-            direction = self.direction,
-            xmin = self.xmin,
-            xmax = self.xmax,
-            ymin = self.ymin,
-            ymax = self.ymax,
-            occupied = self._occupiedFunction
+            reverseY=self.reverseY,
+            direction=self.direction,
+            xmin=self.xmin,
+            xmax=self.xmax,
+            ymin=self.ymin,
+            ymax=self.ymax,
+            occupied=self._occupiedFunction
         )
 
     def __hash__(self) -> NoReturn: # type: ignore
@@ -638,12 +672,12 @@ class MapAgent(MapPosition, Agent):
         return MapPosition(
             self.x,
             self.y,
-            reverseY = self.reverseY,
-            xmin = self.xmin,
-            xmax = self.xmax,
-            ymin = self.ymin,
-            ymax = self.ymax,
-            occupied = self._occupiedFunction
+            reverseY=self.reverseY,
+            xmin=self.xmin,
+            xmax=self.xmax,
+            ymin=self.ymin,
+            ymax=self.ymax,
+            occupied=self._occupiedFunction
         )
 
 
@@ -662,7 +696,7 @@ class HexGrid(_BaseR2Class):
     Syntax: HexGrid(x, y) [Hashable]
 
     HexGrid is hashable while mutable: pay attention at what you do.
-    
+
     HexGrid is basically an unholy union of Agent and Vector, but on an hex grid.
     This means that a position is represented as a 2d coordinate, but not all coordinates are acceptable.
     I am using a system like in figure, with axis NE and SW, with N and S as third axis.
@@ -684,19 +718,19 @@ class HexGrid(_BaseR2Class):
 
     def __add__(self, other: HexGrid) -> HexGrid:
         return HexGrid(self.x + other.x, self.y + other.y)
-    
+
     def __sub__(self, other: HexGrid) -> HexGrid:
         return HexGrid(self.x - other.x, self.y - other.y)
 
     def __rmul__(self, n: int) -> HexGrid:
-        return HexGrid(n*self.x, n*self.y)
-        
+        return HexGrid(n * self.x, n * self.y)
+
     def __mul__(self, n: int) -> HexGrid:
         return n * self
-    
+
     def __str__(self) -> str:
         return "Hex" + str(self.coords())
-    
+
     def __gt__(self, other: Any) -> NoReturn: # type: ignore
         raise(NotImplementedError)
 
@@ -721,7 +755,7 @@ class HexGrid(_BaseR2Class):
                 self.x += -1
             else:
                 raise(Exception(f"DirectionError: {direction}"))
-    
+
     def moveFromTape(self, tape: list[str] = []) -> None:
         for direction in tape:
             self.move(direction=direction)
@@ -731,11 +765,11 @@ class HexGrid(_BaseR2Class):
         self.y = target.y
 
     def adjacent(self) -> list[HexGrid]:
-        return [self + HexGrid(i,j) for (i,j) in [(1,0), (0,1), (1,1), (-1,0), (0,-1), (-1,-1)]]
-    
+        return [self + HexGrid(i, j) for (i, j) in [(1, 0), (0, 1), (1, 1), (-1, 0), (0, -1), (-1, -1)]]
+
     def distance(self, other: Optional[HexGrid] = None) -> int:
         if other is None:
-            other = HexGrid(0,0)
+            other = HexGrid(0, 0)
         x = self.x - other.x
         y = self.y - other.y
         if x * y <= 0:
@@ -759,7 +793,7 @@ class PositionNDim():
             self.coordinates = tuple(coords)
         else:
             self.coordinates = tuple(coordOrList)
-            
+
         self.numDimensions = len(self.coordinates)
         if self.numDimensions <= 4:
             self.x = self.coordinates[0]
@@ -768,23 +802,22 @@ class PositionNDim():
             if self.numDimensions == 4:
                 self.w = self.coordinates[3]
 
-
     def __add__(self, other: PositionNDim) -> PositionNDim:
         return PositionNDim(
             [self.coordinates[i] + other.coordinates[i] for i in range(self.numDimensions)]
         )
-    
+
     def __sub__(self, other: PositionNDim) -> PositionNDim:
         return PositionNDim(
             [self.coordinates[i] - other.coordinates[i] for i in range(self.numDimensions)]
         )
-        
+
     def __rmul__(self, n: int) -> PositionNDim:
-        return PositionNDim( [n*c for c in self.coordinates] )
-    
+        return PositionNDim([n * c for c in self.coordinates])
+
     def __hash__(self) -> int:
         return hash(self.coords())
-    
+
     def __eq__(self, other: PositionNDim) -> bool:
         return self.coords() == other.coords()
 
@@ -802,31 +835,31 @@ class PositionNDim():
 
     def copy(self) -> PositionNDim:
         return copy(self)
-    
+
     def adjacent(self, includeCorners: bool = False) -> list[PositionNDim]:
         if includeCorners:
             return [
-                self + PositionNDim(vals) for vals in product([-1,0,1], repeat=self.numDimensions) \
+                self + PositionNDim(vals) for vals in product([-1, 0, 1], repeat=self.numDimensions)
                 if vals != (0,) * self.numDimensions
             ]
 
         return [
-            self + PositionNDim(vals) for vals in \
-            rotations([1] + [0] * (self.numDimensions - 1)) + \
+            self + PositionNDim(vals) for vals in
+            rotations([1] + [0] * (self.numDimensions - 1)) +
             rotations([-1] + [0] * (self.numDimensions - 1))
         ]
 
     def distance(self, other: Optional[PositionNDim] = None) -> int:
         if other is None:
-            other = PositionNDim( ([0] * self.numDimensions) )
+            other = PositionNDim([0] * self.numDimensions)
         s = self - other
         return sum(map(lambda n: abs(n), s.coordinates))
-        
+
     def length(self, other: Optional[PositionNDim] = None) -> float:
         if other is None:
-            other = PositionNDim( ([0] * self.numDimensions) )
+            other = PositionNDim([0] * self.numDimensions)
         s = self - other
-        return sum(map(lambda n: n**2, s.coordinates)) ** (1/2)
+        return sum(map(lambda n: n**2, s.coordinates)) ** (1 / 2)
 
 
 class GameOfLife():
@@ -843,9 +876,9 @@ class GameOfLife():
     The step method progresses the automaton by a cycle,
     while the image(origChars=False) method returns a Image object representing the current state.
     If origChars is True, the characters used to init the object are used;
-    Otherwise, the solid and empty characters are used 
+    Otherwise, the solid and empty characters are used
     """
-    def __init__(self, data: Iterable[Iterable[T]], on: T = "#", off: T =".") -> None:
+    def __init__(self, data: Iterable[Iterable[T]], on: T = "#", off: T = ".") -> None:
         self.on = on
         self.off = off
         self.state = [[1 if c is on else 0 for c in s] for s in data]
@@ -856,10 +889,10 @@ class GameOfLife():
     def __repr__(self) -> str:
         return str(self)
 
-    def _neighs(self, p: Position) -> list[MapPosition]:
+    def _neighs(self, p: _PositionGeneric) -> list[_PositionGeneric2]:
         q = MapPosition(p.x, p.y, frame=self.state)
         return q.adjacent(includeCorners=True)
-    
+
     def step(self) -> None:
         n = len(self.state)
         m = len(self.state[0])
@@ -867,9 +900,9 @@ class GameOfLife():
         for i in range(n):
             for j in range(m):
                 onNeighs = 0
-                for p in self._neighs(Position(i,j)):
+                for p in self._neighs(Position(i, j)):
                     onNeighs += self.state[p.x][p.y]
-                if self.state[i][j] and onNeighs in [2,3]:
+                if self.state[i][j] and onNeighs in [2, 3]:
                     newstate[i][j] = 1
                 elif not self.state[i][j] and onNeighs == 3:
                     newstate[i][j] = 1
@@ -881,12 +914,12 @@ class GameOfLife():
         on = str(self.on) if origChars else solid
         off = str(self.off) if origChars else empty
 
-        return Image([[on if n == 1 else off for n in l] for l in self.state])
+        return Image([[on if n == 1 else off for n in line] for line in self.state])
 
 
 # Image-based classes
 
-def _setDoubleSlice(key:DoubleSlice) -> tuple[slice, slice]:
+def _setDoubleSlice(key: DoubleSlice) -> tuple[slice, slice]:
     """
     Helper method for overloading getitem with two dimensions
     """
@@ -896,12 +929,12 @@ def _setDoubleSlice(key:DoubleSlice) -> tuple[slice, slice]:
     else:
         y = key
         x = slice(None)
-    
+
     if not isinstance(x, slice):
-        x = slice(x, x+1 or None)
+        x = slice(x, x + 1 or None)
     if not isinstance(y, slice):
-        y = slice(y, y+1 or None)
-    return (y,x)
+        y = slice(y, y + 1 or None)
+    return (y, x)
 
 def _sliceToRange(item: slice, minRange: int, maxRange: int, step: int = 1) -> range:
     """
@@ -925,7 +958,7 @@ class Image():
     and uses it to construct a 2D numpy array called pixels.
     This array has shape image.shape = (y, x), having y rows and x columns.
     Properties image.ishape = (x, y) and image.nshape = {x: x, y: y} are also available.
-    
+
     Images can be concatenated horizontally with + and vertically with &.
     Since this rebuilds the array every time, if in need to concatenate an entire row or column,
     please use the apposite helper function.
@@ -948,7 +981,7 @@ class Image():
     def __init__(self, image: Iterable[Iterable[Any]]) -> None:
 
         self.pixels: np.ndarray = np.array([list(r) for r in image]) # type: ignore
-    
+
     def __eq__(self, other: Image) -> bool:
         if self.shape != other.shape:
             return False
@@ -959,7 +992,7 @@ class Image():
 
     def __and__(self, other: Image) -> Image:
         return Image(np.concatenate((self.pixels, other.pixels), axis=0))
-    
+
     def __getitem__(self, key: DoubleSlice) -> Image:
         (yslice, xslice) = _setDoubleSlice(key)
         return Image(self.pixels[yslice, xslice])
@@ -976,28 +1009,30 @@ class Image():
     @property
     def shape(self) -> tuple[int, int]:
         return cast(tuple[int, int], self.pixels.shape)
-    
+
     @property
     def ishape(self) -> tuple[int, int]:
         s = self.shape
         return (s[1], s[0])
-        
+
     @property
     def nshape(self) -> XY:
         return XY(*self.ishape)
-        
+
     def copy(self) -> Image:
         return Image(self.pixels)
 
     def image(self) -> str:
         return "\n".join(["".join(stringify(row)) for row in self.pixels])
-    
+
     @overload
     def rotate(self, n: int = 0, clockwise: bool = False, copy: Literal[False] = False) -> None:
         return
+
     @overload
     def rotate(self, n: int = 0, clockwise: bool = False, copy: Literal[True] = True) -> Image:
         return Image([[""]])
+
     def rotate(self, n: int = 1, clockwise: bool = False, copy: bool = False):
         if clockwise:
             k = -n
@@ -1012,9 +1047,11 @@ class Image():
     @overload
     def flip(self, ud: bool = False, copy: Literal[False] = False) -> None:
         return
+
     @overload
     def flip(self, ud: bool = False, copy: Literal[True] = True) -> Image:
         return Image([[""]])
+
     def flip(self, ud: bool = False, copy: bool = False):
         if ud:
             i = np.flipud(self.pixels)
@@ -1072,15 +1109,15 @@ class Map():
     or via str (returning str(map.image()))
     """
     def __init__(
-            self,
-            visual: Callable[[Position], str] = lambda p: ".",
-            frame: Optional[Sequence[Sequence[Any]]] = None,
-            xmin: int = 0,
-            xmax: int = 9,
-            ymin: int = 0,
-            ymax: int = 9,
-            reverseY: bool = True
-        ):
+        self,
+        visual: Callable[[Position], str] = lambda p: ".",
+        frame: Optional[Sequence[Sequence[Any]]] = None,
+        xmin: int = 0,
+        xmax: int = 9,
+        ymin: int = 0,
+        ymax: int = 9,
+        reverseY: bool = True
+    ):
         self._visualFunction = visual
         self.step = 1 if reverseY else -1
 
@@ -1088,7 +1125,7 @@ class Map():
             self.xmin = 0
             self.xmax = len(frame[0])
             self.ymin = 0
-            self.ymax = len(frame) 
+            self.ymax = len(frame)
         else:
             self.xmin = xmin
             self.xmax = xmax + 1
@@ -1100,14 +1137,13 @@ class Map():
         yrange = _sliceToRange(yslice, self.ymin, self.ymax, step=self.step)
         xrange = _sliceToRange(xslice, self.xmin, self.xmax)
 
+        visualRepr = [[self._visualFunction(Position(x, y)) for x in xrange] for y in yrange]
 
-        visualRepr = [[self._visualFunction(Position(x,y)) for x in xrange] for y in yrange]
-        
-        return Image(visualRepr) 
+        return Image(visualRepr)
 
     def image(self) -> Image:
-        return self[:,:]
-    
+        return self[:, :]
+
     def __str__(self) -> str:
         return str(self.image())
 
@@ -1136,7 +1172,7 @@ class LinkedList():
         self.data = data
         self.next = self
         self.prev = self
-    
+
     def add(self, othData: Any) -> LinkedList:
         other = LinkedList(othData)
         other.prev = self
@@ -1175,10 +1211,10 @@ def md5(string: str) -> str:
     return hashlib.md5(string.encode()).hexdigest()
 
 def recreatePath(
-    start: _PositionGeneric,
-    goal: _PositionGeneric,
-    pathTrace: dict[_PositionGeneric, _PositionGeneric]
-) -> list[_PositionGeneric]:
+    start: _PositionVar,
+    goal: _PositionVar,
+    pathTrace: dict[_PositionVar, _PositionVar]
+) -> list[_PositionVar]:
     """
     Helper function used to determine the path taken by the A* algorithm
     from start to goal. The path is indicated as a series of consecutive positions.
@@ -1194,32 +1230,36 @@ def recreatePath(
     return ret
 
 
+@overload
+def aStar(
+    start: _PositionVar,
+    goal: _PositionVar,
+    distanceFunction: Callable[[_PositionGeneric, _PositionGeneric2], NUM] = lambda p, q: p.distance(q),
+    estimateFunction: Callable[[_PositionGeneric, _PositionGeneric2], NUM] = lambda p, q: p.distance(q),
+    includeCorners: bool = False,
+    returnPath: Literal[False] = False
+) -> NUM:
+    return 0
 
 @overload
 def aStar(
-    start: _PositionGeneric,
-    goal: _PositionGeneric,
-    distanceFunction: Callable[[_PositionGeneric, _PositionGeneric], Numeric] = lambda p, q: p.distance(q),
-    includeCorners: bool = False,
-    returnPath: Literal[False] = False
-) -> Numeric:
-    return 0
-@overload
-def aStar(
-    start: _PositionGeneric,
-    goal: _PositionGeneric,
-    distanceFunction: Callable[[_PositionGeneric, _PositionGeneric], Numeric] = lambda p, q: p.distance(q),
+    start: _PositionVar,
+    goal: _PositionVar,
+    distanceFunction: Callable[[_PositionGeneric, _PositionGeneric2], NUM] = lambda p, q: p.distance(q),
+    estimateFunction: Callable[[_PositionGeneric, _PositionGeneric2], NUM] = lambda p, q: p.distance(q),
     includeCorners: bool = False,
     returnPath: Literal[True] = True
-) -> list[_PositionGeneric]:
+) -> list[_PositionVar]:
     return []
+
 def aStar(
-    start: _PositionGeneric,
-    goal: _PositionGeneric,
-    distanceFunction: Callable[[_PositionGeneric, _PositionGeneric], Numeric] = lambda p, q: p.distance(q),
+    start: _PositionVar,
+    goal: _PositionVar,
+    distanceFunction: Callable[[_PositionGeneric, _PositionGeneric2], NUM] = lambda p, q: p.distance(q),
+    estimateFunction: Callable[[_PositionGeneric, _PositionGeneric2], NUM] = lambda p, q: p.distance(q),
     includeCorners: bool = False,
     returnPath: bool = False
-) -> Union[Numeric, list[_PositionGeneric]]:
+) -> Union[NUM, list[_PositionVar]]:
     """
     A* Traversing algorithm.
 
@@ -1239,10 +1279,10 @@ def aStar(
     if isinstance(start, Agent):
         start = start.position()
 
-    estimate = partial(distanceFunction, goal)
-    openSet: PriorityQueue[tuple[Numeric, _PositionGeneric]] = PriorityQueue()
-    distance: dict[_PositionGeneric, Numeric] = {start: 0}
-    pathTrace: dict[_PositionGeneric, _PositionGeneric] = {start: start}
+    estimate = partial(estimateFunction, goal)
+    openSet: PriorityQueue[tuple[NUM, _PositionVar]] = PriorityQueue()
+    distance: dict[_PositionVar, NUM] = {start: 0}
+    pathTrace: dict[_PositionVar, _PositionVar] = {start: start}
     openSet.put((estimate(start) + distance[start], start))
 
     while not openSet.empty():
@@ -1251,7 +1291,7 @@ def aStar(
                 return recreatePath(start, goal, pathTrace)
             else:
                 return distance[goal]
-        
+
         (_, current) = openSet.get()
         for p in current.adjacent(includeCorners=includeCorners, include=[goal]):
             tentativeDistance = distance[current] + distanceFunction(current, p)
@@ -1265,9 +1305,9 @@ def aStar(
         return -1
 
 def dijkstra(
-    start: MapPosition,
-    distanceFunction: Callable[[Position, Position], Numeric] = lambda p, q: p.distance(q),
-) -> dict[Position, Numeric]:
+    start: _PositionGeneric,
+    distanceFunction: Callable[[_PositionGeneric2, _PositionGeneric2], NUM] = lambda p, q: p.distance(q),
+) -> dict[_PositionGeneric, NUM]:
     """
     Dijkstra graph exploration algorithm (on a grid).
     Returns a dictionary with, for each node, the min distance from start
@@ -1281,8 +1321,9 @@ def dijkstra(
     it also assumes that there is a method called distance(otherPosition)
     """
 
-    openSet: PriorityQueue[tuple[Numeric, Position]] = PriorityQueue()
-    distance: dict[Position, Numeric] = {start: 0}
+    assert issubclass(_PositionGeneric, Hashable)
+    openSet: PriorityQueue[tuple[NUM, _PositionGeneric]] = PriorityQueue()
+    distance: dict[_PositionGeneric, NUM] = {start: 0}
     openSet.put((distance[start], start))
 
     while not openSet.empty():
