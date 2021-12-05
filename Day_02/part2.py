@@ -3,7 +3,7 @@ from AoCUtils import *
 
 
 result = 0
-partNumber = "1"
+partNumber = "2"
 
 writeToLog = False
 if writeToLog:
