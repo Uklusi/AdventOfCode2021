@@ -85,6 +85,14 @@ def printLogFactory(logFile: LogFileType, printNewline: bool = True) -> Callable
 
     return printLog
 
+def rangeFrame(frame: Sequence[Sequence], x: bool = False, y: bool = False):
+    if x:
+        return range(len(frame[0]))
+    if y:
+        return range(len(frame))
+    return product(range(len(frame[0])), range(len(frame)))
+
+
 # Useful variables
 inf = float("inf")
 false = False
