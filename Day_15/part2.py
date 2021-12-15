@@ -26,7 +26,7 @@ def addToList(numList: list[int], n):
 def makeRow(numList: list[int]):
     new: list[int] = []
     for i in range(5):
-        new += addToList(numList, i)
+        new.extend(addToList(numList, i))
     return new
 
 riskLevels0 = [makeRow(row) for row in origRiskLevels]
