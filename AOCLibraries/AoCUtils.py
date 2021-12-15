@@ -1271,7 +1271,7 @@ def aStar(
     """
     A* Traversing algorithm.
 
-    Usage: aStar(start, goal, *distanceFunction, *includeCorners, *returnPath)
+    Usage: aStar(start, goal, *distanceFunction, *estimateFunction, *includeCorners, *returnPath)
 
     Assuming start and goal as instances of class Position
     or at least assuming that they are ordered, hashable and
@@ -1301,7 +1301,8 @@ def aStar(
                 return distance[goal]
 
         (_, current) = openSet.get()
-        for p in current.adjacent(includeCorners=includeCorners, include=[goal]):
+        includeGoal = current in goal.adjacent(includeCorners=includeCorners)
+        for p in current.adjacent(includeCorners=includeCorners, include=([goal] if includeGoal else [])):
             tentativeDistance = distance[current] + distanceFunction(current, p)
             if p not in distance or distance[p] > tentativeDistance:
                 distance[p] = tentativeDistance
