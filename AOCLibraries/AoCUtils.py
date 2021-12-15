@@ -1294,13 +1294,13 @@ def aStar(
     openSet.put((estimate(start) + distance[start], start))
 
     while not openSet.empty():
-        if goal in distance:
+        (_, current) = openSet.get()
+        if current == goal:
             if returnPath:
                 return recreatePath(start, goal, pathTrace)
             else:
                 return distance[goal]
 
-        (_, current) = openSet.get()
         includeGoal = current in goal.adjacent(includeCorners=includeCorners)
         for p in current.adjacent(includeCorners=includeCorners, include=([goal] if includeGoal else [])):
             tentativeDistance = distance[current] + distanceFunction(current, p)
