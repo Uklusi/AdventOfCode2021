@@ -37,7 +37,7 @@ def triang(n):
 def newStart(vx, vy):
     if vy < 0:
         return (0, 0, vx, vy)
-    n = 2 * vy - 1
+    n = 2 * vy + 1
     k = max(0, vx - n)
     return (triang(vx) - triang(k), 0, k, -vy - 1)
 
@@ -61,11 +61,11 @@ def launch(x, y, ovx, ovy):
     return 0
 
 for vx, vy in product(range(xmax + 1), range(ymin, -ymin)):
-    # r = launch(*newStart(vx, vy))
-    r = launch(0, 0, vx, vy)
+    r = launch(*newStart(vx, vy))
+    # r = launch(0, 0, vx, vy)
     result += r
-    if r:
-        printLog(vx, vy)
+    # if r:
+    #     printLog(vx, vy)
 
 
 with open("output" + partNumber + ".txt", "w") as outputFile:
