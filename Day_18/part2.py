@@ -126,15 +126,26 @@ def sumList(l1, l2):
         # printLog(printList(node))
     return node
 
-def calcMagnitude(node):
-    printed = printList(node)
-    while "[" in printed:
-        printed = re.sub(r"\[(\d+),(\d+)\]", lambda m: str(3 * int(m.group(1)) + 2 * int(m.group(2))), printed)
-    return int(printed)
+def calcMagnitude(origNode, level=1):
+    node = origNode
+    ret = 0
+    if node.data["level"] == level:
+        ret += 3 * int(node.data["value"])
+    else:
+        (node, n) = calcMagnitude(node, level + 1)
+        ret += 3 * n
+    node = node.next
+    if node.data["level"] == level:
+        ret += 2 * int(node.data["value"])
+    else:
+        (node, n) = calcMagnitude(node, level + 1)
+        ret += 2 * n
+    return (node, ret)
+
 
 
 result = max(map(
-    lambda l: calcMagnitude(sumList(*l)),
+    lambda l: calcMagnitude(sumList(*l))[1],
     [(deepcopy(a), deepcopy(b)) for (a, b) in product(nums, repeat=2) if a != b]
 ))
 
