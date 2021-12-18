@@ -1163,51 +1163,74 @@ class Map():
 
 class LinkedList():
     """
-    LinkedList class: an implementation of a circular double linked list
+    LinkedList class: an implementation of a double linked list (circular or not depending on the parameter)
 
-    Syntax: LinkedList(data) [not hashable]
+    Syntax: LinkedList(data, circular = True) [not hashable]
 
     LinkedList is the starting node in a linked list.
-    It starts with linked.data = data, linked.next = linked.prev = linked.
+    It starts with linked.data = data, linked.next = linked.prev = linked if circular, or None otherwise.
     linked.add(data) adds the specified data AFTER the node pointed by linked, and returns the new node
     linked.delete() removes the pointed node, and returns the node BEFORE the deleted one, if any.
+    If the list is not circular and the deleted node is the head of the list, the new head is returned.
     If the deleted node was the only one, returns None.
-    Note that linked.add(data).delete() is idempotent.
-    The list can be traversed by using linked.next, linked.prev or linked.move(n=1)
+    Note that linked.add(data).delete() is the identity function.
+    The list can be traversed by using linked.next, linked.prev or linked.move(n=1, stopAtBorders=False)
     linked.move() requires the number of steps to move forward: if negative moves backward
+    StopAtBorders is only useful in case of a non-circular list.
+    If stopAtBorders is True, the movement stops at the first or last node; otherwise it raises an exception.
     """
-    def __init__(self, data: Any) -> None:
+    def __init__(self, data: Any, circular: bool = True) -> None:
         self.data = data
-        self.next = self
-        self.prev = self
+        if circular:
+            self.next = self
+            self.prev = self
+        else:
+            self.next = None
+            self.prev = None
 
     def add(self, othData: Any) -> LinkedList:
         other = LinkedList(othData)
         other.prev = self
         other.next = self.next
-        self.next.prev = other
+        if self.next is not None:
+            self.next.prev = other
         self.next = other
         return other
 
     def delete(self) -> Optional[LinkedList]:
-        if self.next == self:
+        if self.next == self or (self.next is None and self.prev is None):
             del(self)
             return None
         else:
-            self.next.prev = self.prev
-            self.prev.next = self.next
-            ret = self.prev
+            if self.next is not None:
+                self.next.prev = self.prev
+                ret = self.next
+            if self.prev is not None:
+                self.prev.next = self.next
+                ret = self.prev
             del(self)
             return ret
 
-    def move(self, n: int = 1) -> LinkedList:
+    def move(self, n: int = 1, stopAtBorders: bool = False) -> LinkedList:
         ret = self
         if n > 0:
             for _ in range(n):
-                ret = ret.next
+                if ret.next is None:
+                    if stopAtBorders:
+                        break
+                    else:
+                        raise(Exception("Cannot move forward: end of list"))
+                else:
+                    ret = ret.next
         elif n < 0:
             for _ in range(-n):
-                ret = ret.prev
+                if ret.prev is None:
+                    if stopAtBorders:
+                        break
+                    else:
+                        raise(Exception("Cannot move backward: beginning of list"))
+                else:
+                    ret = ret.prev
         return ret
 
     def __eq__(self, other: LinkedList) -> bool:
