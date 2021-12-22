@@ -18,12 +18,13 @@ from typing import (
 )
 from io import TextIOWrapper
 from copy import copy, deepcopy
-from math import gcd
-from functools import partial
-from itertools import product
+from math import gcd, prod
+from functools import partial, cache
+from itertools import product, starmap
 from queue import PriorityQueue
-from collections import defaultdict # noqa
+from collections import defaultdict
 import re
+import time
 
 import numpy as np
 
@@ -1388,3 +1389,53 @@ def binSearch(start: int, stop: int, check: Callable[[int], bool]) -> int:
         return binSearch(middle, stop, check)
     else:
         return binSearch(start, middle, check)
+
+
+# Shamelessly stolen from mebeim (https://github.com/mebeim/aoc/blob/master/utils/timer.py)
+def seconds_to_most_relevant_unit(s):
+    s *= 1e6
+    if s < 1000:
+        return '{:.3f}µs'.format(s)
+
+    s /= 1000
+    if s < 1000:
+        return '{:.3f}ms'.format(s)
+
+    s /= 1000
+    if s < 60:
+        return '{:.3f}s'.format(s)
+
+    m = int(s / 60)
+    return '{:d}m {:.3f}s'.format(m, (s - m * 60))
+
+timers = {}
+
+def timer_start(name="Timer"):
+    now_wall, now_cpu = time.perf_counter(), time.process_time()
+    timers[name] = (now_wall, now_cpu, now_wall, now_cpu, 1)
+
+def timer_lap(name="Timer", print_time=True):
+    now_wall, now_cpu = time.perf_counter(), time.process_time()
+    *x, prev_wall, prev_cpu, lap = timers[name]
+
+    dt_wall = seconds_to_most_relevant_unit(now_wall - prev_wall)
+    dt_cpu = seconds_to_most_relevant_unit(now_cpu - prev_cpu)
+
+    timers[name] = (*x, time.perf_counter(), time.process_time(), lap + 1)
+
+    ret = ('Timer {} lap #{}: {} wall, {} CPU\n'.format(name, lap, dt_wall, dt_cpu))
+    if print_time:
+        print(ret)
+    return ret
+
+def timer_stop(name="Timer", print_time=True):
+    now_wall, now_cpu = time.perf_counter(), time.process_time()
+    prev_wall, prev_cpu, *_ = timers.pop(name)
+
+    dt_wall = seconds_to_most_relevant_unit(now_wall - prev_wall)
+    dt_cpu = seconds_to_most_relevant_unit(now_cpu - prev_cpu)
+
+    ret = ('Timer {}: {} wall, {} CPU\n'.format(name, dt_wall, dt_cpu))
+    if print_time:
+        print(ret)
+    return ret

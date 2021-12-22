@@ -11,19 +11,26 @@ ln -s ../AOCLibraries/AoCUtils.py Day_$daynum/
 
 echo 'from AoCUtils import *
 
+writeToLog = False
+# writeToLog = True
+
+useExample = False
+# useExample = True
+
 
 result = 0
 partNumber = "1"
 
-writeToLog = False
 if writeToLog:
     logFile = open("log" + partNumber + ".txt", "w")
 else:
     logFile = "stdout"
 printLog = printLogFactory(logFile)
 
+timer_start(partNumber)
 
-with open("input.txt", "r") as inputFile:
+inputFileName = ("example.txt" if useExample else "input.txt")
+with open(inputFileName, "r") as inputFile:
     lines = inputFile.read().strip().split("\n")
     for line in lines:
         line = line.strip()
@@ -31,6 +38,8 @@ with open("input.txt", "r") as inputFile:
 
 
 
+
+timer_stop(partNumber)
 
 with open("output" + partNumber + ".txt", "w") as outputFile:
     outputFile.write(str(result))
@@ -41,5 +50,6 @@ if writeToLog:
 
 touch ./Day_$daynum/part2.py
 touch ./Day_$daynum/input.txt
+touch ./Day_$daynum/example.txt
 touch ./Day_$daynum/output1.txt
 touch ./Day_$daynum/output2.txt
