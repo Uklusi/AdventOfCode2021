@@ -83,6 +83,7 @@ def printLogFactory(logFile: LogFileType, printNewline: bool = True) -> Callable
             logFile.write(s)
             if printNewline:
                 logFile.write("\n")
+            logFile.flush()
 
     return printLog
 
@@ -1354,7 +1355,6 @@ def dijkstra(
     it also assumes that there is a method called distance(otherPosition)
     """
 
-    assert issubclass(_PositionGeneric, Hashable)
     openSet: PriorityQueue[tuple[NUM, _PositionGeneric]] = PriorityQueue()
     distance: dict[_PositionGeneric, NUM] = {start: 0}
     openSet.put((distance[start], start))
@@ -1423,7 +1423,7 @@ def timer_lap(name="Timer", print_time=True):
 
     timers[name] = (*x, time.perf_counter(), time.process_time(), lap + 1)
 
-    ret = ('Timer {} lap #{}: {} wall, {} CPU\n'.format(name, lap, dt_wall, dt_cpu))
+    ret = ('Timer lap #{}: {} wall, {} CPU\n'.format(lap, dt_wall, dt_cpu))
     if print_time:
         print(ret)
     return ret
@@ -1435,7 +1435,7 @@ def timer_stop(name="Timer", print_time=True):
     dt_wall = seconds_to_most_relevant_unit(now_wall - prev_wall)
     dt_cpu = seconds_to_most_relevant_unit(now_cpu - prev_cpu)
 
-    ret = ('Timer {}: {} wall, {} CPU\n'.format(name, dt_wall, dt_cpu))
+    ret = ('Timer: {} wall, {} CPU\n'.format(dt_wall, dt_cpu))
     if print_time:
         print(ret)
     return ret
