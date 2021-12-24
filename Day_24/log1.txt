@@ -1,0 +1,209 @@
+input w0
+x = z
+x = x mod 26
+x = x + 12
+x = x != w0
+z = z // 1
+y = 25
+y = y * x
+y = y + 1
+z = z * y
+y = w0
+y = y + 6
+y = y * x
+z = z + y
+
+input w1
+x = z
+x = x mod 26
+x = x + 10
+x = x != w1
+z = z // 1
+y = 25
+y = y * x
+y = y + 1
+z = z * y
+y = w1
+y = y + 2
+y = y * x
+z = z + y
+
+input w2
+x = z
+x = x mod 26
+x = x + 10
+x = x != w2
+z = z // 1
+y = 25
+y = y * x
+y = y + 1
+z = z * y
+y = w2
+y = y + 13
+y = y * x
+z = z + y
+
+input w3
+x = z
+x = x mod 26
+x = x + -6
+x = x != w3
+z = z // 26
+y = 25
+y = y * x
+y = y + 1
+z = z * y
+y = w3
+y = y + 8
+y = y * x
+z = z + y
+
+input w4
+x = z
+x = x mod 26
+x = x + 11
+x = x != w4
+z = z // 1
+y = 25
+y = y * x
+y = y + 1
+z = z * y
+y = w4
+y = y + 13
+y = y * x
+z = z + y
+
+input w5
+x = z
+x = x mod 26
+x = x + -12
+x = x != w5
+z = z // 26
+y = 25
+y = y * x
+y = y + 1
+z = z * y
+y = w5
+y = y + 8
+y = y * x
+z = z + y
+
+input w6
+x = z
+x = x mod 26
+x = x + 11
+x = x != w6
+z = z // 1
+y = 25
+y = y * x
+y = y + 1
+z = z * y
+y = w6
+y = y + 3
+y = y * x
+z = z + y
+
+input w7
+x = z
+x = x mod 26
+x = x + 12
+x = x != w7
+z = z // 1
+y = 25
+y = y * x
+y = y + 1
+z = z * y
+y = w7
+y = y + 11
+y = y * x
+z = z + y
+
+input w8
+x = z
+x = x mod 26
+x = x + 12
+x = x != w8
+z = z // 1
+y = 25
+y = y * x
+y = y + 1
+z = z * y
+y = w8
+y = y + 10
+y = y * x
+z = z + y
+
+input w9
+x = z
+x = x mod 26
+x = x + -2
+x = x != w9
+z = z // 26
+y = 25
+y = y * x
+y = y + 1
+z = z * y
+y = w9
+y = y + 8
+y = y * x
+z = z + y
+
+input w10
+x = z
+x = x mod 26
+x = x + -5
+x = x != w10
+z = z // 26
+y = 25
+y = y * x
+y = y + 1
+z = z * y
+y = w10
+y = y + 14
+y = y * x
+z = z + y
+
+input w11
+x = z
+x = x mod 26
+x = x + -4
+x = x != w11
+z = z // 26
+y = 25
+y = y * x
+y = y + 1
+z = z * y
+y = w11
+y = y + 6
+y = y * x
+z = z + y
+
+input w12
+x = z
+x = x mod 26
+x = x + -4
+x = x != w12
+z = z // 26
+y = 25
+y = y * x
+y = y + 1
+z = z * y
+y = w12
+y = y + 8
+y = y * x
+z = z + y
+
+input w13
+x = z
+x = x mod 26
+x = x + -12
+x = x != w13
+z = z // 26
+y = 25
+y = y * x
+y = y + 1
+z = z * y
+y = w13
+y = y + 2
+y = y * x
+z = z + y
